@@ -8,15 +8,14 @@
     Copyright 2020 Joyent, Inc.
 -->
 
-# eng: Joyent Engineering Guide
+# Triton API Shim
 
 This repository is part of the Joyent Triton project. See the [contribution
 guidelines][2] and general documentation at the main
 [Triton project][1] page.
 
 
-After the boilerplate paragraph, write a brief description about your repo.
-
+This is Triton API Shim. More details to come.
 
 ## Development
 

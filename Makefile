@@ -49,7 +49,8 @@ else
 	GOOS = $(shell $(GO) env GOOS)
 	GOARCH = $(shell $(GO) env GOARCH)
 endif
-GO_TEST_TARGETS =	test_go
+
+GO_TEST_TARGETS =	test_go test_go_api
 
 #
 # Repo-specific targets
@@ -70,8 +71,12 @@ test: $(GO_TEST_TARGETS)
 .PHONY: test_go
 test_go: $(STAMP_GO_TOOLCHAIN)
 	@$(GO) version
-	$(GO) test . -v
+	$(GO) test . -v -count=1
 
+.PHONY: test_go_api
+test_go_api: $(STAMP_GO_TOOLCHAIN)
+	@$(GO) version
+	$(GO) test ./api -v -count=1
 #
 # Target definitions.  This is where we include the target Makefiles for
 # the "defs" Makefiles we included above.
