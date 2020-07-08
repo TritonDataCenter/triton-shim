@@ -44,7 +44,7 @@ func TestListImagesByName(t *testing.T) {
 			return
 		}
 
-		assert.Equal(t, 1, len(imgs))
+		assert.GreaterOrEqual(t, len(imgs), 1)
 		base64Img := imgs[0]
 		assert.Equal(t, "smartos", base64Img.OS)
 		assert.Equal(t, "zone-dataset", base64Img.Type)
