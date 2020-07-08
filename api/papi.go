@@ -144,10 +144,10 @@ func (c *PapiClient) ListPackages(ctx context.Context, input *ListPackagesInput)
 			query.Set("memory", fmt.Sprintf("%d", input.Memory))
 		}
 		if input.Limit != 0 {
-			query.Set("disk", fmt.Sprintf("%d", input.Limit))
+			query.Set("limit", fmt.Sprintf("%d", input.Limit))
 		}
 		if input.Offset != 0 {
-			query.Set("swap", fmt.Sprintf("%d", input.Offset))
+			query.Set("offset", fmt.Sprintf("%d", input.Offset))
 		}
 		if input.Sort != "" {
 			query.Set("sort", input.Sort)
