@@ -65,6 +65,7 @@ type Client struct {
 	HTTPClient    *http.Client
 	RequestHeader *http.Header
 	URL           url.URL
+	RequestID     string
 }
 
 // New creates a new client object for the provided ServiceURL
@@ -83,7 +84,8 @@ func New(ServiceURL string) (*Client, error) {
 			Transport:     httpTransport(true),
 			CheckRedirect: doNotFollowRedirects,
 		},
-		URL: *APIURL,
+		URL:       *APIURL,
+		RequestID: "",
 	}
 
 	return newClient, nil
@@ -159,6 +161,14 @@ func (c *Client) resetHeader() {
 	c.RequestHeader = nil
 }
 
+func (c *Client) getRequestID() string {
+	return c.RequestID
+}
+
+func (c *Client) setRequestID(requestID string) {
+	c.RequestID = requestID
+}
+
 // RequestInput take by ExecuteRequestURIParams
 type RequestInput struct {
 	Method  string
@@ -213,6 +223,10 @@ func (c *Client) ExecuteRequestURIParams(ctx context.Context, inputs RequestInpu
 		req.Header.Set("Content-Type", "application/json")
 	}
 
+	if c.RequestID != "" {
+		req.Header.Set("request-id", c.RequestID)
+	}
+
 	c.overrideHeader(req)
 
 	resp, err := c.HTTPClient.Do(req.WithContext(ctx))
@@ -220,6 +234,10 @@ func (c *Client) ExecuteRequestURIParams(ctx context.Context, inputs RequestInpu
 		return nil, fmt.Errorf("unable to execute HTTP request: %w", err)
 	}
 
+	reqID := resp.Header.Get("request-id")
+	if reqID != "" {
+		c.setRequestID(reqID)
+	}
 	// We will only return a response from the API it is in the HTTP StatusCode
 	// 2xx range
 	// StatusMultipleChoices is StatusCode 300
