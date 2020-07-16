@@ -32,6 +32,8 @@ import (
 	tritoncompute "github.com/joyent/triton-go/v2/compute"
 
 	"github.com/pborman/uuid"
+
+	"github.com/joyent/triton-shim/utils"
 )
 
 // TODO: Move all the errors to their own file
@@ -242,9 +244,7 @@ func getPostAction(c *gin.Context) (string, error) {
 	return input.Get("Action"), nil
 }
 
-func setupRouter() *gin.Engine {
-	router := gin.Default()
-
+func setupRouter(router *gin.Engine) {
 	router.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
 	})
@@ -267,13 +267,21 @@ func setupRouter() *gin.Engine {
 		log.Printf("[DEBUG] POST action: '%s'\n", action)
 
 		actionHandler(c, action)
-	})
 
-	return router
+		c.Next()
+	})
+}
+
+func setupMiddleware(engine *gin.Engine) {
+	engine.Use(utils.ShimLogger())
 }
 
 func main() {
-	router := setupRouter()
+	engine := gin.Default()
+
+	setupMiddleware(engine)
+	setupRouter(engine)
+
 	// Start listening.
-	router.Run(":9090")
+	engine.Run(":9090")
 }
