@@ -15,11 +15,19 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
 
+func setupTestRouter() *gin.Engine {
+	engine := gin.Default()
+	setupMiddleware(engine)
+	setupRouter(engine)
+	return engine
+}
+
 func TestPingRoute(t *testing.T) {
-	router := setupRouter()
+	router := setupTestRouter()
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
@@ -31,7 +39,7 @@ func TestPingRoute(t *testing.T) {
 }
 
 func TestDefaultAction(t *testing.T) {
-	router := setupRouter()
+	router := setupTestRouter()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
 	router.ServeHTTP(w, req)
@@ -48,7 +56,7 @@ func TestDefaultAction(t *testing.T) {
 }
 
 func TestNamedAction(t *testing.T) {
-	router := setupRouter()
+	router := setupTestRouter()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/?Action=DescribeRegions", nil)
 	router.ServeHTTP(w, req)
