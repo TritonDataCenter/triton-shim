@@ -72,6 +72,8 @@ func actionHandler(c *gin.Context, action string) {
 	switch action {
 	case "DescribeInstances":
 		actions.DescribeInstances(c)
+	case "DescribeInstanceTypes":
+		actions.DescribeInstanceTypes(c)
 
 	// Action not specified
 	case "MissingAction":

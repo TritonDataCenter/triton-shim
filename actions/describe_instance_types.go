@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/gin-gonic/gin"
@@ -16,7 +15,7 @@ import (
 	tritoncompute "github.com/joyent/triton-go/v2/compute"
 )
 
-func DescribeInstances(c *gin.Context) {
+func DescribeInstanceTypes(c *gin.Context) {
 	client, err := GetTritonComputeClient()
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError,
@@ -24,41 +23,36 @@ func DescribeInstances(c *gin.Context) {
 		return
 	}
 
-	vmListInput := &tritoncompute.ListInstancesInput{}
+	packageListInput := &tritoncompute.ListPackagesInput{}
 
-	vms, err := client.Instances().List(context.Background(), vmListInput)
+	packages, err := client.Packages().List(context.Background(), packageListInput)
 
 	if err != nil {
-		log.Printf("[ERROR] list vms error: %v\n", err)
+		log.Printf("[ERROR] list packages error: %v\n", err)
 		c.AbortWithError(http.StatusInternalServerError,
-			fmt.Errorf("Unable to list triton compute instances: %w", err))
+			fmt.Errorf("Unable to list triton compute packages: %w", err))
 		return
 	}
 
-	log.Printf("[DEBUG] loaded %d vms\n", len(vms))
+	log.Printf("[DEBUG] loaded %d packages\n", len(packages))
 
-	// Convert Triton vm to AWS instance.
-	ec2Output := ec2.DescribeInstancesOutput{}
+	// Convert Triton package to AWS AMI.
+	ec2Output := ec2.DescribeInstanceTypesOutput{}
 
-	if len(vms) > 0 {
-		res := &ec2.Reservation{}
-
-		for _, vm := range vms {
-			inst := &ec2.Instance{
-				InstanceId:         &vm.ID,
-				VirtualizationType: aws.String("hvm"), // Is this correct?
-				ImageId:            &vm.Image,
+	if len(packages) > 0 {
+		for _, pkg := range packages {
+			instType := &ec2.InstanceTypeInfo{
+				InstanceType: &pkg.Name,
+				MemoryInfo:   &ec2.MemoryInfo{SizeInMiB: &pkg.Memory},
 			}
-			res.Instances = append(res.Instances, inst)
+			ec2Output.InstanceTypes = append(ec2Output.InstanceTypes, instType)
 		}
-
-		ec2Output.Reservations = append(ec2Output.Reservations, res)
 	}
 
 	// Generate the XML response.
 	var buf bytes.Buffer
 	buf.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
-	buf.WriteString(`<DescribeInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2016-11-15/">` + "\n")
+	buf.WriteString(`<DescribeInstanceTypesResponse xmlns="http://ec2.amazonaws.com/doc/2016-11-15/">` + "\n")
 
 	// Build the XML from the AWS struct.
 	err = xmlutil.BuildXML(ec2Output, xml.NewEncoder(&buf))
@@ -69,7 +63,7 @@ func DescribeInstances(c *gin.Context) {
 		return
 	}
 
-	buf.WriteString(`</DescribeInstancesResponse>` + "\n")
+	buf.WriteString(`</DescribeInstanceTypesResponse>` + "\n")
 
 	// Send the XML response.
 	c.Header("content-type", "text/xml;charset=UTF-8")
