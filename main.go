@@ -18,7 +18,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 
 	"github.com/joyent/triton-shim/actions"
 	"github.com/joyent/triton-shim/utils"
@@ -67,7 +67,7 @@ func InvalidActionError(Action string, RequestID string) *XMLErrorResponse {
 }
 
 func actionHandler(c *gin.Context, action string) {
-	reqID := uuid.New()
+	reqID := uuid.New().String()
 
 	switch action {
 	case "DescribeInstances":
