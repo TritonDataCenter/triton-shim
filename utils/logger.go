@@ -31,7 +31,10 @@ func ShimLogger() gin.HandlerFunc {
 		},
 	)
 
+	debugHTTP := os.Getenv("TRITON_SHIM_DEBUG_HTTP")
+
 	return func(c *gin.Context) {
+		var bodyWriter *bodyLogWriter
 		start := time.Now()
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery
@@ -39,13 +42,16 @@ func ShimLogger() gin.HandlerFunc {
 			path = path + "?" + raw
 		}
 
-		b, err := httputil.DumpRequest(c.Request, true)
-		if err == nil {
-			log.Printf("Request: %s\n", b)
-		}
+		if debugHTTP != "" {
+			b, err := httputil.DumpRequest(c.Request, true)
+			if err == nil {
+				log.Printf("Request: %s\n", b)
+			}
 
-		bodyWriter := &bodyLogWriter{Body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
-		c.Writer = bodyWriter
+			// Replace the default body writer with our own, so we can obtain the body contents.
+			bodyWriter = &bodyLogWriter{Body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
+			c.Writer = bodyWriter
+		}
 
 		c.Next()
 
@@ -77,7 +83,9 @@ func ShimLogger() gin.HandlerFunc {
 			}
 		default:
 			dumplogger.Info().Msg(msg)
-			log.Logger.Debug().Msg("Response: " + bodyWriter.Body.String())
+			if debugHTTP != "" {
+				log.Logger.Debug().Msg("Response: " + bodyWriter.Body.String())
+			}
 		}
 	}
 }
