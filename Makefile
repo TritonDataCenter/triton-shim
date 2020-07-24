@@ -50,7 +50,7 @@ else
 	GOARCH = $(shell $(GO) env GOARCH)
 endif
 
-GO_TEST_TARGETS =	test_go test_go_api
+GO_TEST_DIRECTORIES =	./actions ./api ./server
 
 #
 # Repo-specific targets
@@ -63,20 +63,10 @@ release:
 	echo "Do work here: tag the release. We're gonna use git submodules at first pass"
 
 .PHONY: test
-test: $(GO_TEST_TARGETS)
-
-#
-# This test demonstrates a basic use of the project-local Go toolchain.
-#
-.PHONY: test_go
-test_go: $(STAMP_GO_TOOLCHAIN)
+test: $(STAMP_GO_TOOLCHAIN)
 	@$(GO) version
-	$(GO) test . -v -count=1
+	$(GO) test $(GO_TEST_DIRECTORIES)
 
-.PHONY: test_go_api
-test_go_api: $(STAMP_GO_TOOLCHAIN)
-	@$(GO) version
-	$(GO) test ./api -v -count=1
 #
 # Target definitions.  This is where we include the target Makefiles for
 # the "defs" Makefiles we included above.
