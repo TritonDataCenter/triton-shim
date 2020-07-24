@@ -6,7 +6,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 //
 
-package main
+package server_test
 
 import (
 	"encoding/xml"
@@ -15,19 +15,13 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/gin-gonic/gin"
+	"github.com/joyent/triton-shim/errors"
+	"github.com/joyent/triton-shim/server"
 	"github.com/stretchr/testify/assert"
 )
 
-func setupTestRouter() *gin.Engine {
-	engine := gin.Default()
-	setupMiddleware(engine)
-	setupRouter(engine)
-	return engine
-}
-
 func TestPingRoute(t *testing.T) {
-	router := setupTestRouter()
+	router := server.Setup()
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
@@ -39,13 +33,13 @@ func TestPingRoute(t *testing.T) {
 }
 
 func TestDefaultAction(t *testing.T) {
-	router := setupTestRouter()
+	router := server.Setup()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotAcceptable, w.Code)
-	var xmlBytesOut XMLErrorResponse
+	var xmlBytesOut errors.XMLErrorResponse
 	err := xml.Unmarshal(w.Body.Bytes(), &xmlBytesOut)
 	assert.Empty(t, err)
 	assert.Equal(t, xmlBytesOut.XMLName, xml.Name(xml.Name{Space: "", Local: "Response"}))
@@ -56,13 +50,13 @@ func TestDefaultAction(t *testing.T) {
 }
 
 func TestNamedAction(t *testing.T) {
-	router := setupTestRouter()
+	router := server.Setup()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/?Action=DescribeRegions", nil)
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusMethodNotAllowed, w.Code)
-	var xmlBytesOut XMLErrorResponse
+	var xmlBytesOut errors.XMLErrorResponse
 	err := xml.Unmarshal(w.Body.Bytes(), &xmlBytesOut)
 	assert.Empty(t, err)
 	assert.Equal(t, xmlBytesOut.XMLName, xml.Name(xml.Name{Space: "", Local: "Response"}))
