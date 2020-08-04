@@ -1,4 +1,4 @@
-package actions
+package tritonutils
 
 import (
 	"encoding/pem"
@@ -8,13 +8,19 @@ import (
 
 	triton "github.com/joyent/triton-go/v2"
 	tritonauth "github.com/joyent/triton-go/v2/authentication"
-	tritoncompute "github.com/joyent/triton-go/v2/compute"
 )
 
-// Helper to return a CloudAPI compute client.
 // TODO: This is currently hard coded to use a TRITON_ACCOUNT, we need to
 // update this to pass through the CloudAPI user authentication.
-func GetTritonComputeClient() (*tritoncompute.ComputeClient, error) {
+// For prototype purposes, the used account should be an admin account if
+// we need to provide access to different accounts' resources.
+// Ideally, we should use either token based auth for the application, or
+// figure out a way to authenticate requests using AccessKeys against CloudAPI.
+
+// GetTritonAuthSigner is a helper method used to retrieve a triton.Signer object
+// suitable to be used with either triton compute or any other of the triton package
+// clients
+func GetTritonAuthSigner() (*tritonauth.Signer, error) {
 	var err error
 	var signer tritonauth.Signer
 
@@ -69,12 +75,5 @@ func GetTritonComputeClient() (*tritoncompute.ComputeClient, error) {
 		}
 	}
 
-	config := &triton.ClientConfig{
-		TritonURL:   triton.GetEnv("URL"),
-		AccountName: triton.GetEnv("ACCOUNT"),
-		Username:    triton.GetEnv("USER"),
-		Signers:     []tritonauth.Signer{signer},
-	}
-
-	return tritoncompute.NewClient(config)
+	return &signer, nil
 }

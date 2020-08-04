@@ -21,10 +21,11 @@ import (
 	"github.com/rs/zerolog/log"
 
 	tritoncompute "github.com/joyent/triton-go/v2/compute"
+	tritonutils "github.com/joyent/triton-shim/utils/triton"
 )
 
 func DescribeInstanceTypes(c *gin.Context) {
-	client, err := GetTritonComputeClient()
+	client, err := tritonutils.GetTritonComputeClient()
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError,
 			fmt.Errorf("Unable to create triton compute client: %w", err))
