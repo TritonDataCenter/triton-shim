@@ -9,11 +9,8 @@
 package server
 
 import (
-	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"net/url"
 
 	"github.com/gin-gonic/gin"
 
@@ -47,23 +44,6 @@ func actionHandler(c *gin.Context, action string) {
 	}
 }
 
-func getPostAction(c *gin.Context) (string, error) {
-	// TODO: Better way to read the POST body - but not also having to read in
-	// megabytes of data?
-	buf := make([]byte, 10000)
-	n, err := c.Request.Body.Read(buf)
-	if err != nil && err != io.EOF {
-		return "", fmt.Errorf("Unable to parse request body: %w", err)
-	}
-
-	input, err := url.ParseQuery(string(buf[:n]))
-	if err != nil {
-		return "", fmt.Errorf("Unable to parse request body: %w", err)
-	}
-
-	return input.Get("Action"), nil
-}
-
 func setupRouter(router *gin.Engine) {
 	router.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
@@ -78,11 +58,7 @@ func setupRouter(router *gin.Engine) {
 	})
 
 	router.POST("/", func(c *gin.Context) {
-		action, err := getPostAction(c)
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
+		action := c.DefaultPostForm("Action", "MissingAction")
 
 		log.Printf("[DEBUG] POST action: '%s'\n", action)
 
@@ -94,8 +70,10 @@ func setupRouter(router *gin.Engine) {
 
 func setupMiddleware(engine *gin.Engine) {
 	engine.Use(utils.ShimLogger())
+	engine.Use(utils.VerifySignature())
 }
 
+// Setup gin.Engine with middleware and routes
 func Setup() *gin.Engine {
 	engine := gin.Default()
 

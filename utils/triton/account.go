@@ -7,7 +7,9 @@ import (
 )
 
 // GetTritonAccountClient is a Helper to return a CloudAPI account client used to manipulate
-// AccessKeys
+// AccessKeys.
+// TODO: Modify to accept account and user names, since we plan to access multiple accounts
+// from single application, not only the ENV account.
 func GetTritonAccountClient() (*tritonaccount.AccountClient, error) {
 	var err error
 	var signer *tritonauth.Signer
