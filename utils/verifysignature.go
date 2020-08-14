@@ -86,6 +86,16 @@ func getCurrentKey(authHeader string, accesskeys []*tritonaccount.AccessKey) (*t
 	return currentKey, nil
 }
 
+func getRegion(authHeader string) (string, error) {
+	credsRe := regexp.MustCompile(`Credential=(\S+),`)
+	if !credsRe.MatchString(authHeader) {
+		return "", errors.New("Cannot find region name")
+	}
+	creds := credsRe.FindStringSubmatch(authHeader)
+	region := strings.Split(creds[1], "/")[2]
+	return region, nil
+}
+
 func getSignedHeaders(authHeader string) ([]string, error) {
 	// Once we know which AccessKey has been used to sign the request
 	// we need to know which headers have been signed
@@ -145,6 +155,12 @@ func VerifySignature() gin.HandlerFunc {
 			return
 		}
 
+		region, err := getRegion(authHeader)
+		if err != nil {
+			c.AbortWithError(http.StatusUnauthorized, err)
+			return
+		}
+
 		signedHeaders, err := getSignedHeaders(authHeader)
 		if err != nil {
 			c.AbortWithError(http.StatusUnauthorized, err)
@@ -182,7 +198,7 @@ func VerifySignature() gin.HandlerFunc {
 		signer := awsv4signer.NewSigner(creds)
 		signBody := getRawBody(c)
 
-		_, err = signer.Sign(dupeRequest, signBody, "ec2", c.Request.Host, t)
+		_, err = signer.Sign(dupeRequest, signBody, "ec2", region, t)
 		if err != nil {
 			c.AbortWithError(http.StatusUnauthorized,
 				errors.New("Unable to verify request signature"))
