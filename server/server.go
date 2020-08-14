@@ -25,6 +25,8 @@ func actionHandler(c *gin.Context, action string) {
 	reqID := uuid.New().String()
 
 	switch action {
+	case "DescribeImages":
+		actions.DescribeImages(c)
 	case "DescribeInstances":
 		actions.DescribeInstances(c)
 	case "DescribeInstanceTypes":
