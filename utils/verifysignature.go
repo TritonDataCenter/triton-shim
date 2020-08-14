@@ -188,6 +188,7 @@ func VerifySignature() gin.HandlerFunc {
 				errors.New("Unable to verify request signature"))
 			return
 		}
+		log.Printf("[Calculated Authorization Header]: %s\n", dupeRequest.Header.Get("Authorization"))
 
 		if !compareSignatures(authHeader, dupeRequest.Header.Get("Authorization")) {
 			c.AbortWithError(http.StatusUnauthorized,
