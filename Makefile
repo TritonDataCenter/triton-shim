@@ -65,7 +65,7 @@ release:
 .PHONY: test
 test: $(STAMP_GO_TOOLCHAIN)
 	@$(GO) version
-	$(GO) test $(GO_TEST_DIRECTORIES)
+	$(GO) test $(GO_TEST_DIRECTORIES) -count=1
 
 #
 # Target definitions.  This is where we include the target Makefiles for
