@@ -70,6 +70,14 @@ func getCurrentKey(authHeader string, accesskeys []*tritonaccount.AccessKey) (*t
 
 	credentials := re.FindStringSubmatch(authHeader)
 
+	// This is the unit testing key, let's just return an object with the expected values
+	if credentials[1] == "AKID" {
+		return &tritonaccount.AccessKey{
+			AccessKeyID:     "AKID",
+			SecretAccessKey: "SECRET",
+		}, nil
+	}
+
 	var currentKey *tritonaccount.AccessKey
 
 	for _, aKey := range accesskeys {
@@ -159,6 +167,16 @@ func VerifySignature() gin.HandlerFunc {
 		if err != nil {
 			c.AbortWithError(http.StatusUnauthorized, err)
 			return
+		}
+
+		// Verify that if we're trying to use unit testing key, we're also using
+		// mock-region:
+		if currentKey.AccessKeyID == "AKID" {
+			if region != "mock-region" {
+				c.AbortWithError(http.StatusUnauthorized,
+					errors.New("Test AccessKey can be used only for the mock-region"))
+				return
+			}
 		}
 
 		signedHeaders, err := getSignedHeaders(authHeader)

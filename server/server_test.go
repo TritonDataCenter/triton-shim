@@ -14,17 +14,29 @@ import (
 	"net/http/httptest"
 	"regexp"
 	"testing"
+	"time"
 
+	awscredentials "github.com/aws/aws-sdk-go/aws/credentials"
+	awsv4signer "github.com/aws/aws-sdk-go/aws/signer/v4"
 	"github.com/joyent/triton-shim/errors"
 	"github.com/joyent/triton-shim/server"
 	"github.com/stretchr/testify/assert"
 )
+
+func signRequest(req *http.Request) error {
+	creds := awscredentials.NewStaticCredentials("AKID", "SECRET", "SESSION")
+	signer := awsv4signer.NewSigner(creds)
+
+	_, err := signer.Sign(req, nil, "ec2", "mock-region", time.Unix(0, 0))
+	return err
+}
 
 func TestPingRoute(t *testing.T) {
 	router := server.Setup()
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
+	signRequest(req)
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -36,6 +48,7 @@ func TestDefaultAction(t *testing.T) {
 	router := server.Setup()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
+	signRequest(req)
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotAcceptable, w.Code)
@@ -53,6 +66,7 @@ func TestNamedAction(t *testing.T) {
 	router := server.Setup()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/?Action=DescribeRegions", nil)
+	signRequest(req)
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusMethodNotAllowed, w.Code)

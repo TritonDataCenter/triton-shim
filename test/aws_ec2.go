@@ -44,9 +44,10 @@ func GetEC2Svc(t *testing.T, runTest func(ec2Svc *ec2.EC2)) {
 
 	// Load session from shared config
 	awsConfig := aws.Config{
-		Region:     unit.Session.Config.Region,
-		DisableSSL: aws.Bool(true),
-		Endpoint:   aws.String(fmt.Sprintf("http://%s", listener.Addr().String())),
+		Region:      unit.Session.Config.Region,
+		DisableSSL:  aws.Bool(true),
+		Endpoint:    aws.String(fmt.Sprintf("http://%s", listener.Addr().String())),
+		Credentials: unit.Session.Config.Credentials,
 	}
 
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
